@@ -4,7 +4,7 @@ const config = require('./config.json');
 const token = config.token;
 
 
-
+//писать онли в index.js
 
 /* 
 
