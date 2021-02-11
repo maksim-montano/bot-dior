@@ -207,7 +207,7 @@ bot.on("message", message => {
         .setFooter('© DiorBot Team')
         .setColor('BLURPLE')
         .setTimestamp()
-
+ 
         return message.reply('', {embed: help__embed})
             .then(msg => msg.delete({timeout: 10000}))
     }
