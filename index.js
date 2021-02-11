@@ -8,7 +8,7 @@ const bot = new Discord.Client(); // создание клиента новог�
 
 // ====== [ПОДКЛЮЧЕНИЕ PRESSETS FILES] ====== //
 
-// ====== [ПОДКЛЮЧЕНИЕ СХЕМ MONGO] ====== //
+// ====== [ПОДКЛЮЧЕНИЕ БД-схем] ====== //
 
 const Family = require('./assets/data/family.js');
 
@@ -29,18 +29,22 @@ mongoose.connection.on('connected', () => {
 
 
 bot.on("message", message => {
-    // fcreate
+    
+    //  > CMD FCREATE <  //
     if(message.content.startsWith('/fcreate')) { // /fcreate название
+        message.delete()
         const args = message.content.split(' ');
         const mention__user = message.mentions.members.first();
+
         if(!message.member.hasPermission('ADMINISTRATOR')) return;
         if(!args[1]) return message.reply('вы не указали название семьи').then(msg => msg.delete({timeout: 5000}));
-        if(!mention__user) return message.reply("вы не указали создателя семьи").then(msg => msg.delete({timeout: 5000}));
+        if(!args[2]) return message.reply('вы не указали создателя семьи').then(msg => msg.delete({timeout: 5000}));
+        if(!mention__user) return message.reply("вы указали не правильно пользователя").then(msg => msg.delete({timeout: 5000}));
         
         Family.findOne({FamilyName: args[1]}, async(err, data) => {
             if(err) console.log(err);
             if(!data) {
-                let new__family = new Family({CreatorFam: mention__user.id, FamilyName: args[1]})
+                let new__family = new Family({CreatorFam: mention__user.id, FamilyName: args[1], guildID: message.guild.id})
                 new__family.save().then(() => console.log('Создана новая семья'));
 
                 let success__createfamily = new Discord.MessageEmbed()
@@ -56,14 +60,65 @@ bot.on("message", message => {
                 .setFooter(`© DiorBot Team`)
                 .setTimestamp()
 
-                return message.channel.send(`<@${message.guild.members.cache.get(new__family.CreatorFam).id}>, семья успешно создана!`, {embed: success__createfamily})
+                return message.channel.send(`<@${message.guild.members.cache.get(new__family.CreatorFam).id}>, семья успешно создана!`, {embed: success__createfamily}).then(msg => msg.delete({timeout: 7000}))
             }
             
             return message.reply('семья с таким названием уже существует!').then(msg => msg.delete({timeout: 5000}));
         })
     }
+    //  > CMD: fdelete <  //
+    if(message.content.startsWith('/fdelete')) {
+        message.delete()
+        const args = message.content.split(" ");
+
+        if(!args[1]) return message.reply('вы не указали название семьи!').then(msg => msg.delete({timeout: 5000}));
+        Family.findOne({FamilyName: args[1], guildID: message.guild.id}, async(err, data) => {
+            if(err) console.log(err);
+            if(!data) return message.reply('семьи с таким названеим не существует!').then(msg => msg.delete({timeout: 5000}));
+
+            if(message.author.id === data.CreatorFam || data.FamilyZams.includes(message.author.id)) { // если удаляет создатель или зам
+                let embed__deletefam = new Discord.MessageEmbed()
+                .setTitle('DiorBot | Удаление семьи')
+                .addFields(
+                    {name: `Название семьи`, value: `\`${data.FamilyName}\``, inline: true},
+
+                    {name: `Удалил семью`, value: `<@${message.author.id}>`, inline: true},
+
+                    {name: `Время удадления`, value: `\`${message.createdAt.getUTCHours() + 3}:${message.createdAt.getUTCMinutes()}:${message.createdAt.getUTCSeconds()} МСК\``, inline: true},
+                )
+                .setColor('BLURPLE')
+                .setFooter(`© DiorBot Team`)
+                .setTimestamp()
+
+                data.remove();
+
+                return message.channel.send(`<@${message.author.id}>, вы успешно удалили семью!`, {embed: embed__deletefam}).then(msg => msg.delete({timeout: 7000}));
+
+            } else if(message.member.hasPermission('ADMINISTRATOR')) { // если удалят администратор
+                let embed__deletefam = new Discord.MessageEmbed()
+                .setTitle('DiorBot | Удаление семьи')
+                .addFields(
+                    {name: `Название семьи`, value: `\`${data.FamilyName}\``, inline: true},
+
+                    {name: `Удалил семью`, value: `<@${message.author.id}>`, inline: true},
+
+                    {name: `Время удадления`, value: `\`${message.createdAt.getUTCHours() + 3}:${message.createdAt.getUTCMinutes()}:${message.createdAt.getUTCSeconds()} МСК\``, inline: true},
+                )
+                .setColor('BLURPLE')
+                .setFooter(`© DiorBot Team`)
+                .setTimestamp()
+
+                data.remove();
+
+                return message.channel.send(`<@${message.author.id}>, вы успешно удалили семью!`, {embed: embed__deletefam}).then(msg => msg.delete({timeout: 7000}));
+            } else {
+                return message.reply('вы не являетесь создателем или заместителем семьи!').then(msg => msg.delete({timeout: 5000}));
+            }
+        })
+    }
 
     if(message.content.startsWith('/help')) {
+        message.delete()
         let help__embed = new Discord.MessageEmbed()
         .setTitle('Test Bot | Помощь по командам бота.')
         .addFields(
@@ -100,7 +155,7 @@ bot.login(process.env.TOKEN);
 
 /* 
 
-        * Сделать систему семей (fcreate, fdelete, finvite, fkick, faddzam, fdelzam, fupdate, fsetname, fmenu, fhelp, finfo)
+        * Сделать систему семей (_, fdelete, finvite, fkick, faddzam, fdelzam, fupdate, fsetname, fmenu, fhelp, finfo)
         * Переделать /help на блоки и сделать фукнционал перелистования этих блоков ( messageReactionsAdd )
         * Сделать систему рангов и топа (rank, top)
         * Сделать систему взаимодействий ( обнять, поцеловать, погладить )

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const schema = mongoose.Schema({
     CreatorFam: String,
+    guildID: String,
     FamilyName: String,
     FamilyChannel: String,
     FamilyRole: String,
