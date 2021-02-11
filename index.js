@@ -1,13 +1,13 @@
 // ====== [ПОДКЛЮЧЕНИЕ ЛИБ] ====== //
 require('dotenv').config()
-const Discord = require('discord.js'); // подключили библиотеку дискорд.джс
+const Discord = require('discord.js'); 
 const mongoose = require('mongoose');
 
-
-const bot = new Discord.Client(); // создание клиента нового
+const bot = new Discord.Client();
 
 // ====== [ПОДКЛЮЧЕНИЕ PRESSETS FILES / functions] ====== //
 
+const {sendInviteMessage} = require('./assets/pressets/functions.js');
 
 // ====== [ПОДКЛЮЧЕНИЕ БД-схем] ====== //
 
@@ -170,57 +170,7 @@ bot.on("message", message => {
                         for(let i = 0; i < REACTIONS__MESSAGE.length; i++) {
                             if(reaction.emoji.name === REACTIONS__MESSAGE[i]) {
                                 const family_name = reaction.message.embeds[0].fields[i].name.split(`#0${i+1}. Название: `)[1];
-
-                                Family.findOne({FamilyName: family_name}, async(err, data__family) => {
-                                    if(err) console.log(err);
-                                    if(!data__family) return message.reply('\`произошла критическая ошибка, обратитесь к разработчику бота!\`');
-                                    
-                                    if(data__family.FamilyZams.includes(mention__user.id)) return message.reply('\`пользователь, которого вы хотите пригласить - является заместителем этой семьи\`');
-                                    if(data__family.FamilyMembers.includes(mention__user.id)) return message.reply('\`пользователь уже состоит в вашей семье!\`');
-
-                                    let embed__invitefam = new Discord.MessageEmbed()
-                                    .setTitle('DiorBot | Вас приглашают в семью!')
-                                    .addFields(
-                                        {name: 'Приглашает:', value: `<@${message.author.id}>`, inline: true},
-                                        {name: 'Название семьи:', value: `\`${data__family.FamilyName}\``, inline: true},
-                                        {name: 'Количество участников семьи:', value: `\`${data__family.FamilyMembers.length}\``, inline: true}
-                                    )
-                                    .setColor('BLURPLE')
-                                    .setFooter('© DiorBot Team')
-                                    .setTimestamp()
-                                    
-                                    message.channel.send(`<@${mention__user.id}>, вас приглашают в семью!`, {embed: embed__invitefam}).then(message__invite => {
-                                        message__list.delete()
-                                        message__invite.react("✔️");
-                                        message__invite.react("❌");
-
-                                        const filter__messageInvite = (reaction, user) => {
-                                            return ["✔️", "❌"].includes(reaction.emoji.name) && user.id === mention__user.id;
-                                        };
-
-                                        message__invite.awaitReactions(filter__messageInvite, {
-                                            max: 1,
-                                            time: 70000,
-                                            errors: ['time'],
-                                        }).then(collctedRecations__invite => {
-                                            const reaction = collctedRecations__invite.first()
-
-                                            if(reaction.emoji.name === "✔️") {
-                                                data__family.FamilyMembers.push(mention__user.id);
-                                                data__family.FamilyMembersDescr.push(`<@${mention__user.id}>`);
-
-                                                data__family.save().then(() => console.log(`Пользователь был добавлен в семью!`));
-                                                return message__invite.delete();
-                                            }
-
-                                            if(reaction.emoji.name === "❌") {
-                                                return message__invite.delete();
-                                            }
-                                        }).catch(() => {
-                                            return message__invite.delete();
-                                        })
-                                    })
-                                });
+                                sendInviteMessage(Family, family_name, message, message__list);
                             }
                         }
                     }).catch(() => {
@@ -229,55 +179,7 @@ bot.on("message", message => {
                 })
             })
         } else {
-            Family.findOne({FamilyName: args[2]}, async(err, data__family) => {
-                if(err) console.log(err);
-                if(!data__family) return message.reply('\`указаная вами семья - несуществует\`');
-                
-                if(data__family.FamilyZams.includes(mention__user.id)) return message.reply('\`пользователь, которого вы хотите пригласить - является заместителем этой семьи\`');
-                if(data__family.FamilyMembers.includes(mention__user.id)) return message.reply('\`пользователь уже состоит в вашей семье!\`');
-
-                let embed__invitefam = new Discord.MessageEmbed()
-                .setTitle('DiorBot | Вас приглашают в семью!')
-                .addFields(
-                    {name: 'Приглашает:', value: `<@${message.author.id}>`, inline: true},
-                    {name: 'Название семьи:', value: `\`${data__family.FamilyName}\``, inline: true},
-                    {name: 'Количество участников семьи:', value: `\`${data__family.FamilyMembers.length}\``, inline: true}
-                )
-                .setColor('BLURPLE')
-                .setFooter('© DiorBot Team')
-                .setTimestamp()
-
-                message.channel.send(`<@${mention__user.id}>, вас приглашают в семью!`, {embed: embed__invitefam}).then(message__invite => {
-                    message__invite.react("✔️");
-                    message__invite.react("❌");
-
-                    const filter__messageInvite = (reaction, user) => {
-                        return ["✔️", "❌"].includes(reaction.emoji.name) && user.id === mention__user.id;
-                    };
-
-                    message__invite.awaitReactions(filter__messageInvite, {
-                        max: 1,
-                        time: 70000,
-                        errors: ['time'],
-                    }).then(collctedRecations__invite => {
-                        const reaction = collctedRecations__invite.first()
-
-                        if(reaction.emoji.name === "✔️") {
-                            data__family.FamilyMembers.push(mention__user.id);
-                            data__family.FamilyMembersDescr.push(`<@${mention__user.id}>`);
-
-                            data__family.save().then(() => console.log(`Пользователь был добавлен в семью!`));
-                            return message__invite.delete();
-                        }
-
-                        if(reaction.emoji.name === "❌") {
-                            return message__invite.delete();
-                        }
-                    }).catch(() => {
-                        return message__invite.delete();
-                    })
-                })
-            });
+            sendInviteMessage(Family, args[2], message);
         }
     }
 
@@ -320,10 +222,9 @@ bot.on("messageReactionAdd", (reaction, user) => {
 bot.login(process.env.TOKEN); 
 
 
-
 /* 
 
-        * Сделать систему семей (_, _, _, fkick, faddzam, fdelzam, fupdate, fsetname, fmenu, fhelp, finfo)
+        * Сделать систему семей (_, _, _, fkick, faddzam, fdelzam, fupdate, fsetname(?), fmenu, fhelp, finfo)
         * Переделать /help на блоки и сделать фукнционал перелистования этих блоков ( messageReactionsAdd )
         * Сделать систему рангов и топа (rank, top)
         * Сделать систему взаимодействий ( обнять, поцеловать, погладить )
