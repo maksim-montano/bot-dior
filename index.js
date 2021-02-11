@@ -6,7 +6,8 @@ const mongoose = require('mongoose');
 
 const bot = new Discord.Client(); // создание клиента нового
 
-// ====== [ПОДКЛЮЧЕНИЕ PRESSETS FILES] ====== //
+// ====== [ПОДКЛЮЧЕНИЕ PRESSETS FILES / functions] ====== //
+
 
 // ====== [ПОДКЛЮЧЕНИЕ БД-схем] ====== //
 
@@ -66,12 +67,15 @@ bot.on("message", message => {
             return message.reply('семья с таким названием уже существует!').then(msg => msg.delete({timeout: 5000}));
         })
     }
+
+
+
     //  > CMD: fdelete <  //
     if(message.content.startsWith('/fdelete')) {
         message.delete()
         const args = message.content.split(" ");
 
-        if(!args[1]) return message.reply('вы не указали название семьи!').then(msg => msg.delete({timeout: 5000}));
+        if(!args[1]) return message.reply('\`вы не указали название семьи!\`').then(msg => msg.delete({timeout: 5000}));
         Family.findOne({FamilyName: args[1], guildID: message.guild.id}, async(err, data) => {
             if(err) console.log(err);
             if(!data) return message.reply('семьи с таким названеим не существует!').then(msg => msg.delete({timeout: 5000}));
@@ -112,10 +116,174 @@ bot.on("message", message => {
 
                 return message.channel.send(`<@${message.author.id}>, вы успешно удалили семью!`, {embed: embed__deletefam}).then(msg => msg.delete({timeout: 7000}));
             } else {
-                return message.reply('вы не являетесь создателем или заместителем семьи!').then(msg => msg.delete({timeout: 5000}));
+                return message.reply('\`вы не являетесь создателем или заместителем семьи!\`').then(msg => msg.delete({timeout: 5000}));
             }
         })
     }
+
+
+
+    //  > CMD: finvite <  //
+
+
+    if(message.content.startsWith('/finvite')) { //        /finvite mention__user famname
+        const args = message.content.split(" ");
+        const mention__user = message.mentions.users.first();
+        const REACTIONS__MESSAGE = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"];
+        message.delete()
+        if(!args[1]) return message.reply('вы не указали пользователя!');
+        if(!mention__user) return message.reply('вы не верно указали пользователя!');
+        if(message.author.id === mention__user.id) return message.reply('видимо ты ошибся пользователем, ты приглашаешь самого себя!').then(msg => msg.delete({timeout: 5000}))
+
+        if(!args[2]) {
+            const families__list = new Discord.MessageEmbed()
+            .setTitle(`DiorBot | Приглашение игрока в семью`)
+            .setDescription(`\`Вас привествует диалоговое окно приглашения пользователя в семью дискорда! Внизу есть список семей, где вы являетесь либо создателем, либо заместителем. Еще ниже - есть реакции - их всего-лишь пять, думаю вы их увидете. При нажатии на какую-то из реакций - вы приглашаете пользователя в семью под этим номером. Не знаете на какую реакцию жать? Все просто: каждая реакция соотвествует номеру семьи в списке выше, значит - ищите в списке семью, которую надо, смотрите на номер и ищите реакцию с таким номером\`\n**Вы приглашаете:** <@${mention__user.id}>`)
+            .setColor('BLURPLE')
+            .setFooter('© DiorBot Team')
+            .setTimestamp()
+
+            Family.find( {$or: [ {CreatorFam: message.author.id}, {FamilyZams: message.author.id} ] }, async(err, data) => {
+                if(err) console.log(err);
+                if(!data) return message.reply('\`к сожалению ты не являешься создателем/заместитетелем какой-либо семьи!\`').then(msg => msg.delete({timeout: 5000}))
+
+                for(let i = 0; i < data.length; i++) {
+                    families__list.addField(`#0${i + 1}. Название: ${data[i].FamilyName}`, `\`${data[i].FamilyMembers.length} участников | ${data[i].FamilyZams.length} заместителей\``)
+                }
+
+                message.channel.send(`<@${message.author.id}>, вот ваш список семей:`, {embed: families__list}).then(message__list => {
+                    for(let reaction of REACTIONS__MESSAGE) {
+                        message__list.react(reaction)
+                    }
+
+
+                    const filter__messageList = (reaction, user) => {
+                        return REACTIONS__MESSAGE.includes(reaction.emoji.name) && user.id === message.author.id;
+                    };
+
+                    message__list.awaitReactions(filter__messageList, {
+                        max: 1,
+                        time: 60000,
+                        errors: ['time'],
+                    }).then(collect__reaction => {
+                        let reaction = collect__reaction.first();
+                        for(let i = 0; i < REACTIONS__MESSAGE.length; i++) {
+                            if(reaction.emoji.name === REACTIONS__MESSAGE[i]) {
+                                const family_name = reaction.message.embeds[0].fields[i].name.split(`#0${i+1}. Название: `)[1];
+
+                                Family.findOne({FamilyName: family_name}, async(err, data__family) => {
+                                    if(err) console.log(err);
+                                    if(!data__family) return message.reply('\`произошла критическая ошибка, обратитесь к разработчику бота!\`');
+                                    
+                                    if(data__family.FamilyZams.includes(mention__user.id)) return message.reply('\`пользователь, которого вы хотите пригласить - является заместителем этой семьи\`');
+                                    if(data__family.FamilyMembers.includes(mention__user.id)) return message.reply('\`пользователь уже состоит в вашей семье!\`');
+
+                                    let embed__invitefam = new Discord.MessageEmbed()
+                                    .setTitle('DiorBot | Вас приглашают в семью!')
+                                    .addFields(
+                                        {name: 'Приглашает:', value: `<@${message.author.id}>`, inline: true},
+                                        {name: 'Название семьи:', value: `\`${data__family.FamilyName}\``, inline: true},
+                                        {name: 'Количество участников семьи:', value: `\`${data__family.FamilyMembers.length}\``, inline: true}
+                                    )
+                                    .setColor('BLURPLE')
+                                    .setFooter('© DiorBot Team')
+                                    .setTimestamp()
+                                    
+                                    message.channel.send(`<@${mention__user.id}>, вас приглашают в семью!`, {embed: embed__invitefam}).then(message__invite => {
+                                        message__list.delete()
+                                        message__invite.react("✔️");
+                                        message__invite.react("❌");
+
+                                        const filter__messageInvite = (reaction, user) => {
+                                            return ["✔️", "❌"].includes(reaction.emoji.name) && user.id === mention__user.id;
+                                        };
+
+                                        message__invite.awaitReactions(filter__messageInvite, {
+                                            max: 1,
+                                            time: 70000,
+                                            errors: ['time'],
+                                        }).then(collctedRecations__invite => {
+                                            const reaction = collctedRecations__invite.first()
+
+                                            if(reaction.emoji.name === "✔️") {
+                                                data__family.FamilyMembers.push(mention__user.id);
+                                                data__family.FamilyMembersDescr.push(`<@${mention__user.id}>`);
+
+                                                data__family.save().then(() => console.log(`Пользователь был добавлен в семью!`));
+                                                return message__invite.delete();
+                                            }
+
+                                            if(reaction.emoji.name === "❌") {
+                                                return message__invite.delete();
+                                            }
+                                        }).catch(() => {
+                                            return message__invite.delete();
+                                        })
+                                    })
+                                });
+                            }
+                        }
+                    }).catch(() => {
+                        return message__list.delete()
+                    })
+                })
+            })
+        } else {
+            Family.findOne({FamilyName: args[2]}, async(err, data__family) => {
+                if(err) console.log(err);
+                if(!data__family) return message.reply('\`указаная вами семья - несуществует\`');
+                
+                if(data__family.FamilyZams.includes(mention__user.id)) return message.reply('\`пользователь, которого вы хотите пригласить - является заместителем этой семьи\`');
+                if(data__family.FamilyMembers.includes(mention__user.id)) return message.reply('\`пользователь уже состоит в вашей семье!\`');
+
+                let embed__invitefam = new Discord.MessageEmbed()
+                .setTitle('DiorBot | Вас приглашают в семью!')
+                .addFields(
+                    {name: 'Приглашает:', value: `<@${message.author.id}>`, inline: true},
+                    {name: 'Название семьи:', value: `\`${data__family.FamilyName}\``, inline: true},
+                    {name: 'Количество участников семьи:', value: `\`${data__family.FamilyMembers.length}\``, inline: true}
+                )
+                .setColor('BLURPLE')
+                .setFooter('© DiorBot Team')
+                .setTimestamp()
+
+                message.channel.send(`<@${mention__user.id}>, вас приглашают в семью!`, {embed: embed__invitefam}).then(message__invite => {
+                    message__invite.react("✔️");
+                    message__invite.react("❌");
+
+                    const filter__messageInvite = (reaction, user) => {
+                        return ["✔️", "❌"].includes(reaction.emoji.name) && user.id === mention__user.id;
+                    };
+
+                    message__invite.awaitReactions(filter__messageInvite, {
+                        max: 1,
+                        time: 70000,
+                        errors: ['time'],
+                    }).then(collctedRecations__invite => {
+                        const reaction = collctedRecations__invite.first()
+
+                        if(reaction.emoji.name === "✔️") {
+                            data__family.FamilyMembers.push(mention__user.id);
+                            data__family.FamilyMembersDescr.push(`<@${mention__user.id}>`);
+
+                            data__family.save().then(() => console.log(`Пользователь был добавлен в семью!`));
+                            return message__invite.delete();
+                        }
+
+                        if(reaction.emoji.name === "❌") {
+                            return message__invite.delete();
+                        }
+                    }).catch(() => {
+                        return message__invite.delete();
+                    })
+                })
+            });
+        }
+    }
+
+
+
+    // > CMD: help < //
 
     if(message.content.startsWith('/help')) {
         message.delete()
@@ -155,17 +323,11 @@ bot.login(process.env.TOKEN);
 
 /* 
 
-        * Сделать систему семей (_, fdelete, finvite, fkick, faddzam, fdelzam, fupdate, fsetname, fmenu, fhelp, finfo)
+        * Сделать систему семей (_, _, _, fkick, faddzam, fdelzam, fupdate, fsetname, fmenu, fhelp, finfo)
         * Переделать /help на блоки и сделать фукнционал перелистования этих блоков ( messageReactionsAdd )
         * Сделать систему рангов и топа (rank, top)
         * Сделать систему взаимодействий ( обнять, поцеловать, погладить )
         * Сделать команду setprefix
         * Сделать команду /user
-
-
-
-        
-        * Подлючить бд, нормально структурировать все в папке, ну в общем, подготовить к нормальному проекту. По возможности везде добавить коментарии и т.д
-        * Нужно сто проц заливать на мейн акк гита, постараться сделать за три дня +-, пока выходные, потом сделать еще и стейка и подучить реакт
 
 */
