@@ -7,7 +7,8 @@ const bot = new Discord.Client();
 
 // ====== [ПОДКЛЮЧЕНИЕ PRESSETS-FILES / functions] ====== //
 
-const {sendInviteMessage} = require('./assets/pressets/functions.js');
+const {sendInviteMessage, generateEmbed} = require('./assets/pressets/functions.js');
+const {objectsEmbeds__help} = require('./assets/pressets/objectEmbeds.js');
 
 // ====== [ПОДКЛЮЧЕНИЕ БД-схем] ====== //
 
@@ -18,7 +19,7 @@ const Users = require('./assets/data/users.js');
 
 // ====== [INDEX.JS] ====== //
 bot.on("ready", () => {
-    bot.generateInvite("ADMINISTRATOR")
+    bot.generateInvite(['ADMINISTRATOR'])
         .then((link) => console.log(link));
     console.log(`[SYSTEM] Бот ${bot.user.username} успешно запущен!`);
 });
@@ -224,33 +225,28 @@ bot.on("message", message => {
 
     if(message.content.startsWith('/help')) {
         message.delete()
-        let help__embed = new Discord.MessageEmbed()
-        .setTitle('Test Bot | Помощь по командам бота.')
-        .addFields(
-            {name: 'Система семей', value: `**/createfam** - \`создать семью\`\n**/addzam** - \`добавить заместителя в семью\`\n**/updatefam** - \`улучшение семьи\`\n**/famkick** - \`исключение из семьи\`\n**/faminv** - \`приглашение в семью\`\n**/fmenu** - \`просмотр меню семьи\`\n**/fsetname** - \`установить новое имя семьи\``, inline: true},
-
-
-            {name: 'Общие системы', value: `**/rank** - \`узнать свою уровень в дискорде\`\n**/top** - \`просмотреть список топ пользователей сервера\`\n**/balance** - \`узнать кол-во вашего баланса\``, inline: true},
-
-
-            {name: 'Система взаимодействий', value: `**/обнять** - \`обнять пользователя дискорда\`\n**/поцеловать** - \`поцеловать пользователя дискорда\`\n**/ударить** - \`ударить пользователя дискорда\``},
-
-
-            {name: 'Административные системы', value: `**/setprefix** - \`установить новый префикс\``}
-        )
-        
-        .setFooter('© DiorBot Team')
-        .setColor('BLURPLE')
-        .setTimestamp()
- 
-        return message.reply('', {embed: help__embed})
-            .then(msg => msg.delete({timeout: 10000}))
+        generateEmbed(0, message.member.displayName, message);
     }
 });
 
 
 bot.on("messageReactionAdd", (reaction, user) => {
-    
+    if(user.bot) return;
+    if(reaction.message.embeds[0].title.includes('DiorBot | Помощь по командам бота >')) {
+        let currentPageIndex = reaction.message.embeds[0].footer.text.split("|")[2].match(/\d/)[0];
+
+        if(reaction.emoji.name === "⬅️") {
+            if(+currentPageIndex === 1) return;
+            generateEmbed(+currentPageIndex-2, reaction.message.guild.members.cache.find(m => m.id === reaction.message.embeds[0].footer.iconURL.split('/')[4]).displayName, reaction);
+        }
+
+        if(reaction.emoji.name === "➡️") {
+            console.log(+currentPageIndex)
+            if(+currentPageIndex === objectsEmbeds__help.length) return;
+            
+            generateEmbed(+currentPageIndex, reaction.message.guild.members.cache.find(m => m.id === reaction.message.embeds[0].footer.iconURL.split('/')[4]).displayName, reaction);
+        }
+    }
 })
 
 
@@ -259,7 +255,7 @@ bot.login(process.env.TOKEN);
 
 /* 
 
-        * Сделать систему семей (_, _, _, fkick, faddzam, fdelzam, fupdate(?), fsetname(?), fmenu, fhelp, finfo)
+        * Сделать систему семей (_, _, _, fkick, faddzam, fdelzam, fupdate(?), fsetname(?), fmenu, finfo)
         * Переделать /help на блоки и сделать фукнционал перелистования этих блоков ( messageReactionsAdd )
         * Сделать систему рангов и топа (rank, top)
         * Сделать систему взаимодействий ( обнять, поцеловать, погладить )

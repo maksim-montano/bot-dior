@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const mongoose = require('mongoose');
+const {objectsEmbeds__help} = require('./objectEmbeds.js');
 
 module.exports = {
     sendInviteMessage: function(collection, search, message, msg) {
@@ -54,5 +55,29 @@ module.exports = {
                 })
             })
         });
+    },
+
+
+    generateEmbed: function(pageNum, author, opt) {
+        let emebed__help = new Discord.MessageEmbed()
+        let keys = Object.keys(objectsEmbeds__help[pageNum]);
+        for(let key of keys) {
+            if(typeof objectsEmbeds__help[pageNum][`${key}`] === 'object') {
+                for(let k = 0; k < objectsEmbeds__help[pageNum][`${key}`].length; k++) {
+                    emebed__help.addFields(objectsEmbeds__help[pageNum][`${key}`][k]);
+                }
+            }
+            if(key === 'title') emebed__help.setTitle(objectsEmbeds__help[pageNum][`${key}`]);
+            if(key === 'description') emebed__help.setDescription(objectsEmbeds__help[pageNum][`${key}`]);
+            if(key === 'color') emebed__help.setColor(objectsEmbeds__help[pageNum][`${key}`]);
+            if(key === 'footer') opt.__proto__ === Discord.Message.prototype ? emebed__help.setFooter(`${objectsEmbeds__help[pageNum][`${key}`]} Запросил: ${author} | Страница: ${pageNum + 1}/${objectsEmbeds__help.length}`, opt.guild.members.cache.find(member => member.displayName === author).user.displayAvatarURL()) : emebed__help.setFooter(`${objectsEmbeds__help[pageNum][`${key}`]} Запросил: ${author} | Страница: ${pageNum + 1}/${objectsEmbeds__help.length}`, opt.message.guild.members.cache.find(member => member.displayName === author).user.displayAvatarURL());
+            if(key === 'timeStamp' && objectsEmbeds__help[pageNum][`${key}`] === true) emebed__help.setTimestamp();
+        }
+
+        return opt.__proto__ === Discord.Message.prototype ? opt.channel.send('', {embed: emebed__help}).then(message__help => {
+            message__help.react('⬅️');
+            message__help.react('➡️');
+            message__help.react('❌');
+        }) : opt.message.edit(emebed__help);
     }
 }
