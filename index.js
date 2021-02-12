@@ -5,15 +5,15 @@ const mongoose = require('mongoose');
 
 const bot = new Discord.Client();
 
-// ====== [ПОДКЛЮЧЕНИЕ PRESSETS FILES / functions] ====== //
+// ====== [ПОДКЛЮЧЕНИЕ PRESSETS-FILES / functions] ====== //
 
 const {sendInviteMessage} = require('./assets/pressets/functions.js');
 
 // ====== [ПОДКЛЮЧЕНИЕ БД-схем] ====== //
 
 const Family = require('./assets/data/family.js');
-
-
+const Guilds = require('./assets/data/guilds.js');
+const Users = require('./assets/data/users.js');
 
 
 // ====== [INDEX.JS] ====== //
@@ -30,6 +30,41 @@ mongoose.connection.on('connected', () => {
 
 
 bot.on("message", message => {
+    //  > CMD: setprefix <  //
+
+    Guilds.findOne({guildID: message.guild.id}, async(err, data) => {
+        if(err) console.log(err);
+        if(!data) {
+            let new__guild = Guilds({guildID: message.guild.id, ownerID: message.guild.ownerID})
+            return new__guild.save().then(() => {
+                if(message.content.startsWith(new__guild.prefix + `setprefix`)) {
+                    console.log(new__guild.ownerID)
+                    let args = message.content.split(" ");
+                    if(!(message.author.id === new__guild.ownerID)) return message.reply(`\`вы не создатель этого сервера!\``);
+                    if(!args[1]) return message.reply(`\`ты не указал какой префикс нужно ставить =)\``);
+        
+                    new__guild.prefix = args[1];
+                    new__guild.save().then(() => console.log(`Изменен префикс`));
+        
+                    message.reply('\`вы успешно сменили префикс на ' + `${args[1]}\``)
+                }
+            });
+
+        }
+
+        if(message.content.startsWith(data.prefix + `setprefix`)) {
+            let args = message.content.split(" ");
+            if(!message.author.id === data.ownerID) return message.reply(`\`вы не создатель этого сервера!\``);
+            if(!args[1]) return message.reply(`\`ты не указал какой префикс нужно ставить =)\``);
+
+            data.prefix = args[1];
+            data.save().then(() => console.log(`Изменен префикс`));
+
+            return message.reply('\`вы успешно сменили префикс на ' + `${args[1]}\``)
+        }
+
+    })
+
     
     //  > CMD FCREATE <  //
     if(message.content.startsWith('/fcreate')) { // /fcreate название
@@ -224,11 +259,41 @@ bot.login(process.env.TOKEN);
 
 /* 
 
-        * Сделать систему семей (_, _, _, fkick, faddzam, fdelzam, fupdate, fsetname(?), fmenu, fhelp, finfo)
+        * Сделать систему семей (_, _, _, fkick, faddzam, fdelzam, fupdate(?), fsetname(?), fmenu, fhelp, finfo)
         * Переделать /help на блоки и сделать фукнционал перелистования этих блоков ( messageReactionsAdd )
         * Сделать систему рангов и топа (rank, top)
         * Сделать систему взаимодействий ( обнять, поцеловать, погладить )
         * Сделать команду setprefix
         * Сделать команду /user
+
+*/
+
+
+
+
+/* 
+
+
+ЮЗЕРЫ
+
+const const mongoose = require('mongoose');
+const schema = mongoose.Schema({
+    userID: String,
+    guildID: String,
+    coins: String,
+});
+module.exports = mongoose.model("users", schema)
+
+
+гильдии
+const mongoose = require('mongoose');
+const schema = mongoose.Schema({
+    guildID: String,
+    ownerID: String,
+    prefix: String,
+});
+module.exports = mongoose.model("guilds", schema)
+
+
 
 */
