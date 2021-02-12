@@ -233,6 +233,7 @@ bot.on("message", message => {
 bot.on("messageReactionAdd", (reaction, user) => {
     if(user.bot) return;
     if(reaction.message.embeds[0].title.includes('DiorBot | Помощь по командам бота >')) {
+        if(user.id !== reaction.message.guild.members.cache.find(m => m.displayName === reaction.message.embeds[0].footer.text.split("|")[1].split(" ")[2]).id) return;
         let currentPageIndex = reaction.message.embeds[0].footer.text.split("|")[2].match(/\d/)[0];
 
         if(reaction.emoji.name === "⬅️") {
@@ -246,6 +247,8 @@ bot.on("messageReactionAdd", (reaction, user) => {
             
             generateEmbed(+currentPageIndex, reaction.message.guild.members.cache.find(m => m.id === reaction.message.embeds[0].footer.iconURL.split('/')[4]).displayName, reaction);
         }
+
+        if(reaction.emoji.name === "❌") return reaction.message.delete()
     }
 })
 
