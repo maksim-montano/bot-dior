@@ -67,10 +67,11 @@ module.exports = {
                     emebed__help.addFields(objectsEmbeds__help[pageNum][`${key}`][k]);
                 }
             }
+
             if(key === 'title') emebed__help.setTitle(objectsEmbeds__help[pageNum][`${key}`]);
             if(key === 'description') emebed__help.setDescription(objectsEmbeds__help[pageNum][`${key}`]);
             if(key === 'color') emebed__help.setColor(objectsEmbeds__help[pageNum][`${key}`]);
-            if(key === 'footer') opt.__proto__ === Discord.Message.prototype ? emebed__help.setFooter(`${objectsEmbeds__help[pageNum][`${key}`]} Запросил: ${author} | Страница: ${pageNum + 1}/${objectsEmbeds__help.length}`, opt.guild.members.cache.find(member => member.displayName === author).user.displayAvatarURL()) : emebed__help.setFooter(`${objectsEmbeds__help[pageNum][`${key}`]} Запросил: ${author} | Страница: ${pageNum + 1}/${objectsEmbeds__help.length}`, opt.message.guild.members.cache.find(member => member.displayName === author).user.displayAvatarURL());
+            if(key === 'footer') opt.__proto__ === Discord.Message.prototype ? emebed__help.setFooter(`${objectsEmbeds__help[pageNum][`${key}`]} Запросил: ${author} | Страница: ${pageNum + 1}/${objectsEmbeds__help.length}`, opt.guild.members.cache.find(member => member.user.tag === author).user.displayAvatarURL()) : emebed__help.setFooter(`${objectsEmbeds__help[pageNum][`${key}`]} Запросил: ${author} | Страница: ${pageNum + 1}/${objectsEmbeds__help.length}`, opt.message.guild.members.cache.find(member => member.user.tag === author).user.displayAvatarURL());
             if(key === 'timeStamp' && objectsEmbeds__help[pageNum][`${key}`] === true) emebed__help.setTimestamp();
         }
 
