@@ -24,6 +24,27 @@ const BotStatistics = require('./assets/data/botstatistic.js');
 
 
 bot.on("ready", () => {
+
+    bot.guilds.cache.forEach(guild => {
+        Guilds.findOne({guildID: guild.id}, async(err, data__guild) => {
+            if(err) console.log(err);
+            if(!data__guild) {
+                let new__guild = new Guilds({guildID: guild.id, ownerID: guild.ownerID, guildMembersSize: guild.members.cache.size})
+                new__guild.save().then(() => console.log('добавлена новая гильдия'))
+            }
+        })
+
+        guild.members.cache.forEach(member => {
+            Users.findOne({userID: member.id}, async(err, data) => {
+                if(err) console.log(err);
+                if(!data) { //  && !member.user.bot
+                    let new__user = new Users({userID: member.id, guildID: guild.id})
+                    new__user.save().then(() => console.log('добавлен новый пользователь!'))
+                }
+            })
+        })
+    })
+
     bot.generateInvite(['ADMINISTRATOR'])
         .then((link) => console.log(link));
     console.log(`[SYSTEM] Бот ${bot.user.username} успешно запущен!`);
@@ -37,6 +58,9 @@ mongoose.connection.on('connected', () => {
 
 bot.on("message", async message => {
     //  > CMD: setprefix <  //
+
+
+
 
     Guilds.findOne({guildID: message.guild.id}, async(err, data) => {
         if(err) console.log(err);
@@ -58,6 +82,9 @@ bot.on("message", async message => {
 
         }
 
+
+
+
         if(message.content.startsWith(`${data.prefix}setprefix`)) {
             let args = message.content.split(" ");
             if(!message.author.id === data.ownerID) return message.reply(`\`вы не создатель этого сервера!\``);
@@ -70,6 +97,12 @@ bot.on("message", async message => {
         }
 
     })
+
+
+
+
+
+
 
     Guilds.findOne({guildID: message.guild.id}, async(err, data) => {
         if(err) console.log(err);
@@ -109,6 +142,10 @@ bot.on("message", async message => {
                     return message.reply('семья с таким названием уже существует!').then(msg => msg.delete({timeout: 5000}));
                 })
             }
+
+
+
+
 
 
             //  > CMD: fdelete <  //
@@ -163,8 +200,12 @@ bot.on("message", async message => {
             }
 
 
-            //  > CMD: finvite <  //
 
+
+
+
+
+            //  > CMD: finvite <  //
 
             if(message.content.startsWith(`${data.prefix}finvite`)) { //        /finvite mention__user famname
                 const args = message.content.split(" ");
@@ -224,12 +265,22 @@ bot.on("message", async message => {
             }
 
 
+
+
+
+
             // > CMD: help < //
 
             if(message.content.startsWith(`${data.prefix}help`)) {
                 message.delete()
                 generateEmbed(0, message.member.user.tag, message);
             }
+
+
+
+
+
+
 
 
 
@@ -275,6 +326,10 @@ bot.on("message", async message => {
                 })
             }
 
+
+
+
+
             // > CMD: обнять //
             if(message.content.startsWith(`${data.prefix}обнять`)) {
 
@@ -315,6 +370,12 @@ bot.on("message", async message => {
                     start();
                 })
             }
+
+
+
+
+
+
 
             // > CMD: поцеловать < //
             if(message.content.startsWith(`${data.prefix}поцеловать`)) {
@@ -358,6 +419,10 @@ bot.on("message", async message => {
             }
 
 
+
+
+
+
             // > CMD: погладить //
             if(message.content.startsWith(`${data.prefix}погладить`)) {
 
@@ -399,6 +464,13 @@ bot.on("message", async message => {
                 })
             }
 
+
+
+
+
+
+
+
             // CMD: ударить //
             if(message.content.startsWith(`${data.prefix}ударить`)) {
 
@@ -439,6 +511,14 @@ bot.on("message", async message => {
                     start();
                 })
             }
+
+
+
+
+
+
+
+
 
             // CMD: тыкнуть //
             if(message.content.startsWith(`${data.prefix}тыкнуть`)) {
@@ -483,12 +563,18 @@ bot.on("message", async message => {
 
 
 
+
+
+
+
+
+
             // > CMD: top < //
             if(message.content.startsWith(`${data.prefix}top`)) {
                 let args = message.content.split(" ");
                 if(!args[1]) return message.reply(`\`ты не указал какой топ нужно отправить!\``);
                 if(args[1].includes('coins')) {
-                    generateTopList(message, 0, 10, 1)
+                    generateTopList(message, message.member.user.tag, 1)
                 }
             }
         }
@@ -517,27 +603,28 @@ bot.on("messageReactionAdd", (reaction, user) => {
     }
 
     if(reaction.message.embeds[0].title.includes('DiorBot | Список топа по coins')) {
-        if(reaction.emoji.name === "➡️") {
-            if(user.id !== reaction.message.guild.members.cache.find(m => m.user.tag === reaction.message.embeds[0].footer.text.split("|")[1].split(" ")[2]).id) return;
-
-            let currentPage = reaction.message.embeds[0].footer.text.split("|")[1].match(/\d/)[0];
-            let maxPage = reaction.message.embeds[0].footer.text.split("|")[1].match(/\d/g)[1];
-            let firstField = reaction.message.embeds[0].fields[0].name.split(". ")[0];
-            let lastField = reaction.message.embeds[0].fields[reaction.message.embeds[0].fields.length-1].name.split(". ")[0];
-
-            if(+currentPage === +maxPage) return;
-
-            generateTopList(reaction, +firstField + 10, +lastField + 10, +currentPage + 1);
-        }
-
         if(reaction.emoji.name === "⬅️") {
             let currentPage = reaction.message.embeds[0].footer.text.split("|")[1].match(/\d/)[0];
             let firstField = reaction.message.embeds[0].fields[0].name.split(". ")[0]; // 10
             let lastField = reaction.message.embeds[0].fields[reaction.message.embeds[0].fields.length-1].name.split(". ")[0]; 
 
+            
             if(+currentPage === 1) return;
 
-            generateTopList(reaction, +firstField - 10, +lastField - 10, +currentPage - 1)
+            generateTopList(reaction, reaction.message.guild.members.cache.find(m => m.id === reaction.message.embeds[0].footer.iconURL.split('/')[4]).user.tag, +currentPage - 1) // generateTopList(reaction, +firstField - 10, +lastField - 10, +currentPage - 1)
+        }
+
+        if(reaction.emoji.name === "➡️") {
+            if(user.id !== reaction.message.guild.members.cache.find(m => m.user.tag === reaction.message.embeds[0].footer.text.split("|")[1].split(" ")[2]).id) return;
+
+            let currentPage = reaction.message.embeds[0].footer.text.split("|")[2].split(" ")[2].split('/')[0];
+            let maxPage = reaction.message.embeds[0].footer.text.split("|")[2].split(" ")[2].split('/')[1]
+            // let firstField = reaction.message.embeds[0].fields[0].name.split(". ")[0];
+            // let lastField = reaction.message.embeds[0].fields[reaction.message.embeds[0].fields.length-1].name.split(". ")[0];
+
+            if(+currentPage === +maxPage) return;
+
+            generateTopList(reaction, reaction.message.guild.members.cache.find(m => m.id === reaction.message.embeds[0].footer.iconURL.split('/')[4]).user.tag, +currentPage + 1); // +firstField + 10, +lastField + 10
         }
 
         if(reaction.emoji.name === "❌") return reaction.message.delete();
@@ -549,11 +636,8 @@ bot.login(process.env.TOKEN);
 
 
 /* 
-
         * Сделать систему семей (_, _, _, fkick, faddzam, fdelzam, fupdate(?), fsetname(?), fmenu, finfo)
         * Сделать систему рангов и топа (rank, _, top rank, top family)
-        * Сделать систему взаимодействий ( обнять, поцеловать, погладить )
-
 */
 
 
