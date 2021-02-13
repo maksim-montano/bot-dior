@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const mongoose = require('mongoose');
+const Users = require('../data/users.js');
 const {objectsEmbeds__help} = require('./objectEmbeds.js');
 
 module.exports = {
@@ -80,5 +81,75 @@ module.exports = {
             message__help.react('➡️');
             message__help.react('❌');
         }) : opt.message.edit(emebed__help);
+    },
+
+
+    generateTopList: function(message, currentNumSlice, maxNumSlice, numPage) {
+        Users.find().sort([
+            ['coins', 'descending']
+        ]).exec((err, res) => {
+            if(err) console.log(err);
+
+            if(message.__proto__ === Discord.Message.prototype) {
+                let num = 0;
+                let args = message.content.split(' ');
+                let toplist = new Discord.MessageEmbed()
+                .setTitle(`DiorBot | Список топа по ${args[1]}`)
+                .setColor('BLURPLE')
+                .setFooter(`© DiorBot Team | Запросил: ${message.member.user.tag} | Страница: ${numPage}/${Math.ceil(res.length / 10)}`, message.guild.members.cache.get(message.member.id).user.displayAvatarURL())
+    
+                if(res.length === 0) return message.reply('\`к сожалению никого в топе пока нету!\`')
+                else if(res.length < maxNumSlice) {
+                    for(i = 0; i < res.length; i++) {
+                        if(!(message.guild.id === res[i].guildID)) {num-1; continue;}
+
+                        message.guild.members.cache.get(res[i].userID) ? toplist.addField(`${num+1}. ${message.guild.members.cache.get(res[i].userID).displayName}`, `Кол-во коинов: ${res[i].coins}`) : toplist.addField(`${i + 1}. Пользователь вышел`, `Кол-во коинов: ${res[i].coins}`)
+                        num++;
+                    }
+                } else {
+                    for(i = currentNumSlice; i < maxNumSlice; i++) {
+                        if(!(message.guild.id === res[i].guildID)) {num-1; continue;}
+
+                        message.guild.members.cache.get(res[i].userID) ? toplist.addField(`${num+1}. ${message.guild.members.cache.get(res[i].userID).displayName}`, `Кол-во коинов: ${res[i].coins}`) : toplist.addField(`${num + 1}. Пользователь вышел`, `Кол-во коинов: ${res[i].coins}`)
+                        num++;
+                    }
+                }
+        
+                return message.channel.send(toplist).then(message__toplist => {
+                        message__toplist.react('⬅️');
+                        message__toplist.react('➡️');
+                        message__toplist.react('❌');
+                    // if(res.length < 10) return message__toplist.react('❌');
+                    // if(res.length >= 10) {
+                    //     message__toplist.react('⬅️');
+                    //     message__toplist.react('➡️');
+                    //     message__toplist.react('❌');
+                    // }
+                })
+            } else if(message.message.__proto__ === Discord.MessageReaction.prototype) {
+                let args = message.message.message.content.split(' ');
+                let toplist = new Discord.MessageEmbed()
+                .setTitle(`DiorBot | Список топа по ${args[1]}`)
+                .setColor('BLURPLE')
+                .setFooter(`© DiorBot Team | Запросил: ${message.member.user.tag} | Страница: ${numPage}/${Math.ceil(res.length / 10)}`, message.message.guild.members.cache.get(message.message.member.id).user.displayAvatarURL())
+    
+                if(res.length === 0) return message.message.reply('\`к сожалению никого в топе пока нету!\`')
+                else if(res.length < maxNumSlice) {
+                    for(let i = 0; i < res.length; i++) {
+                        if(!(message.message.guild.id === res[i].guildID)) {num-1; continue;}
+
+                        message.message.guild.members.cache.get(res[i].userID) ? toplist.addField(`${num + 1}. ${message.message.guild.members.cache.get(res[i].userID).displayName}`, `Кол-во коинов: ${res[i].coins}`) : toplist.addField(`${num + 1}. Пользователь вышел`, `Кол-во коинов: ${res[i].coins}`)
+                    }
+                } else {
+                    for(let i = currentNumSlice; i < maxNumSlice; i++) {
+                        if(!(message.message.guild.id === res[i].guildID)) {num-1; continue;}
+
+                        message.message.guild.members.cache.get(res[i].userID) ? toplist.addField(`${num + 1}. ${message.message.guild.members.cache.get(res[i].userID).displayName}`, `Кол-во коинов: ${res[i].coins}`) : toplist.addField(`${num + 1}. Пользователь вышел`, `Кол-во коинов: ${res[i].coins}`)
+                    }
+                }
+    
+                return message.message.edit(toplist);
+            }
+        })
     }
 }

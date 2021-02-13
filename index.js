@@ -7,7 +7,7 @@ const bot = new Discord.Client();
 
 // ====== [ПОДКЛЮЧЕНИЕ PRESSETS-FILES / functions] ====== //
 
-const {sendInviteMessage, generateEmbed} = require('./assets/pressets/functions.js');
+const {sendInviteMessage, generateEmbed, generateTopList} = require('./assets/pressets/functions.js');
 const {objectsEmbeds__help} = require('./assets/pressets/objectEmbeds.js');
 
 // ====== [ПОДКЛЮЧЕНИЕ БД-схем] ====== //
@@ -240,7 +240,7 @@ bot.on("message", message => {
                 Users.findOne({userID: mention__user.id}, async(err, data) => {
                     if(err) console.log(err);
                     if(!data) {
-                        let new__user = new Users({userID: mention__user.id})
+                        let new__user = new Users({userID: mention__user.id, guildID: message.guild.id})
                         new__user.save().then(() => console.log('Добавлен новый пользователь!'))
                     }
                     Family.findOne({$or: [ {CreatorFam: mention__user.id}, {FamilyZams: mention__user.id} ]}, async(err, data__family) => {
@@ -269,6 +269,15 @@ bot.on("message", message => {
                     })
                 })
             }
+
+            if(message.content.startsWith(`${data.prefix}top`)) { //            !top coins, !top rank, !top family
+                let args = message.content.split(" ");
+
+                if(!args[1]) return message.reply(`\`ты не указал какой топ нужно отправить!\``);
+                if(args[1].includes('coins')) {
+                    generateTopList(message, 0, 10, 1) // currentPage + 1, message.member.user.tag, 0+10, 10+10, message
+                }
+            }
         }
     })
 });
@@ -289,6 +298,33 @@ bot.on("messageReactionAdd", (reaction, user) => {
             if(+currentPageIndex === objectsEmbeds__help.length) return;
             
             generateEmbed(+currentPageIndex, reaction.message.guild.members.cache.find(m => m.id === reaction.message.embeds[0].footer.iconURL.split('/')[4]).user.tag, reaction);
+        }
+
+        if(reaction.emoji.name === "❌") return reaction.message.delete();
+    }
+
+    if(reaction.message.embeds[0].title.includes('DiorBot | Список топа по coins')) {
+        if(reaction.emoji.name === "➡️") {
+            if(user.id !== reaction.message.guild.members.cache.find(m => m.user.tag === reaction.message.embeds[0].footer.text.split("|")[1].split(" ")[2]).id) return;
+
+            let currentPage = reaction.message.embeds[0].footer.text.split("|")[1].match(/\d/)[0];
+            let maxPage = reaction.message.embeds[0].footer.text.split("|")[1].match(/\d/g)[1];
+            let firstField = reaction.message.embeds[0].fields[0].name.split(". ")[0];
+            let lastField = reaction.message.embeds[0].fields[reaction.message.embeds[0].fields.length-1].name.split(". ")[0];
+
+            if(+currentPage === +maxPage) return;
+
+            generateTopList(reaction, +firstField + 10, +lastField + 10, +currentPage + 1);
+        }
+
+        if(reaction.emoji.name === "⬅️") {
+            let currentPage = reaction.message.embeds[0].footer.text.split("|")[1].match(/\d/)[0];
+            let firstField = reaction.message.embeds[0].fields[0].name.split(". ")[0]; // 10
+            let lastField = reaction.message.embeds[0].fields[reaction.message.embeds[0].fields.length-1].name.split(". ")[0]; 
+
+            if(+currentPage === 1) return;
+
+            generateTopList(reaction, +firstField - 10, +lastField - 10, +currentPage - 1)
         }
 
         if(reaction.emoji.name === "❌") return reaction.message.delete();

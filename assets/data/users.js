@@ -2,6 +2,6 @@ const mongoose = require('mongoose');
 const schema = mongoose.Schema({
     userID: String,
     guildID: String,
-    coins: String,
+    coins: { type: Number, default: 0 },
 });
-module.exports = mongoose.model("users", schema)
+module.exports = mongoose.model("Users", schema)
