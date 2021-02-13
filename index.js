@@ -270,12 +270,11 @@ bot.on("message", message => {
                 })
             }
 
-            if(message.content.startsWith(`${data.prefix}top`)) { //            !top coins, !top rank, !top family
+            if(message.content.startsWith(`${data.prefix}top`)) { 
                 let args = message.content.split(" ");
-
                 if(!args[1]) return message.reply(`\`ты не указал какой топ нужно отправить!\``);
                 if(args[1].includes('coins')) {
-                    generateTopList(message, 0, 10, 1) // currentPage + 1, message.member.user.tag, 0+10, 10+10, message
+                    generateTopList(message, 0, 10, 1) 
                 }
             }
         }
@@ -338,7 +337,7 @@ bot.login(process.env.TOKEN);
 /* 
 
         * Сделать систему семей (_, _, _, fkick, faddzam, fdelzam, fupdate(?), fsetname(?), fmenu, finfo)
-        * Сделать систему рангов и топа (rank, top)
+        * Сделать систему рангов и топа (rank, _, top rank, top family)
         * Сделать систему взаимодействий ( обнять, поцеловать, погладить )
 
 */
