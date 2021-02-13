@@ -7,7 +7,7 @@ const bot = new Discord.Client();
 
 // ====== [ПОДКЛЮЧЕНИЕ PRESSETS-FILES / functions] ====== //
 
-const {sendInviteMessage, generateEmbed, generateTopList} = require('./assets/pressets/functions.js');
+const {sendInviteMessage, generateEmbed, generateTopList, getRandomInt} = require('./assets/pressets/functions.js');
 const {objectsEmbeds__help} = require('./assets/pressets/objectEmbeds.js');
 
 // ====== [ПОДКЛЮЧЕНИЕ БД-схем] ====== //
@@ -15,9 +15,12 @@ const {objectsEmbeds__help} = require('./assets/pressets/objectEmbeds.js');
 const Family = require('./assets/data/family.js');
 const Guilds = require('./assets/data/guilds.js');
 const Users = require('./assets/data/users.js');
-
+const BotStatistics = require('./assets/data/botstatistic.js');
 
 // ====== [INDEX.JS] ====== //
+
+
+
 bot.on("ready", () => {
     bot.generateInvite(['ADMINISTRATOR'])
         .then((link) => console.log(link));
@@ -270,11 +273,69 @@ bot.on("message", message => {
                 })
             }
 
-            if(message.content.startsWith(`${data.prefix}top`)) { 
+
+            if(message.content.startsWith(`${data.prefix}обнять`)) {
+                const GIFS__HUG = [
+                    'https://media1.tenor.com/images/e6ab994106f15e72ce57777a7faaf128/tenor.gif?itemid=12796047',
+                    'https://i.gifer.com/ENOc.gif',
+                    'https://i.pinimg.com/originals/24/00/ee/2400eec8e83624dc8114a74261a145fe.gif',
+                    'https://i.pinimg.com/originals/6b/4b/b8/6b4bb8820a05a841d3317172b7b0224f.gif',
+                    'https://i.imgur.com/IAxUnda.gif',
+                    'https://data.whicdn.com/images/241295638/original.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-38.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-59.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-86.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-79.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-63.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-27.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-19.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-12.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-65.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-30.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-34.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-81.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-26.gif',
+                    'https://acegif.com/wp-content/gif/anime-hug-33.gif',
+                ];
+
+                let args = message.content.split(" ");
+                let mention__user = message.mentions.users.first();
+
+                BotStatistics.findOne({botName: bot.user.username}, async(err, data) => {
+                    if(err) console.log(err);
+                    if(!data) {
+                        let members__size = 0;
+                        bot.guilds.cache.forEach(item => {
+                            members__size += item.members.cache.size;
+                        })
+
+                        let new__bot = new BotStatistics({botName: bot.user.username, botServers: bot.guilds.cache.size, botMembers: members__size})
+                        new__bot.save()
+                    }
+
+                    if(!args[1]) return message.reply('\`вы не указали пользователя!\`');
+                    if(!mention__user) return message.reply('\`вы не правильно указали пользователя!\`');
+                    let member = message.guild.members.cache.get(mention__user.id);
+    
+                    let interaction__embed = new Discord.MessageEmbed()
+                    .setTitle(`DiorBot | ${member.displayName} вас обняли!`)
+                    .setImage(GIFS__HUG[getRandomInt(0, 19)])
+                    .setDescription(`<@${member.id}> вас обнял <@${message.author.id}>`)
+                    .setFooter(`Взаимодействия бота: ${bot.user.username} было использовано ${data.botInteractionUses} раз`, bot.user.displayAvatarURL())
+
+                    data.botInteractionUses++;
+                    data.save()
+                    return message.channel.send(interaction__embed)
+                })
+            }
+
+
+            // > CMD: top < //
+            if(message.content.startsWith(`${data.prefix}top`)) {
                 let args = message.content.split(" ");
                 if(!args[1]) return message.reply(`\`ты не указал какой топ нужно отправить!\``);
                 if(args[1].includes('coins')) {
-                    generateTopList(message, 0, 10, 1) 
+                    generateTopList(message, 0, 10, 1)
                 }
             }
         }

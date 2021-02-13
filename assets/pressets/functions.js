@@ -4,6 +4,13 @@ const Users = require('../data/users.js');
 const {objectsEmbeds__help} = require('./objectEmbeds.js');
 
 module.exports = {
+    getRandomInt: function(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    },
+    
     sendInviteMessage: function(collection, search, message, msg) {
         const mention__user = message.mentions.users.first();
         collection.findOne({FamilyName: search}, async(err, data__family) => {
