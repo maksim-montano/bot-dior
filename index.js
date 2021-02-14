@@ -603,13 +603,17 @@ bot.on("messageReactionAdd", (reaction, user) => {
     }
 
     if(reaction.message.embeds[0].title.includes('DiorBot | Список топа по coins')) {
+        if(user.id !== reaction.message.guild.members.cache.find(m => m.user.tag === reaction.message.embeds[0].footer.text.split("|")[1].split(" ")[2]).id) return;
         if(reaction.emoji.name === "⬅️") {
-            let currentPage = reaction.message.embeds[0].footer.text.split("|")[1].match(/\d/)[0];
-            let firstField = reaction.message.embeds[0].fields[0].name.split(". ")[0]; // 10
-            let lastField = reaction.message.embeds[0].fields[reaction.message.embeds[0].fields.length-1].name.split(". ")[0]; 
+            let currentPage = reaction.message.embeds[0].footer.text.split("|")[2].split(" ")[2].split('/')[0];
+            // // let currentPage = reaction.message.embeds[0].footer.text.split("|")[1].match(/\d/)[0];
+            // // let firstField = reaction.message.embeds[0].fields[0].name.split(". ")[0]; // 10
+            // // let lastField = reaction.message.embeds[0].fields[reaction.message.embeds[0].fields.length-1].name.split(". ")[0]; 
 
+
+            // console.log("-" + " " + +currentPage)
             
-            if(+currentPage === 1) return;
+            // if(+currentPage-1 === 1) return;
 
             generateTopList(reaction, reaction.message.guild.members.cache.find(m => m.id === reaction.message.embeds[0].footer.iconURL.split('/')[4]).user.tag, +currentPage - 1) // generateTopList(reaction, +firstField - 10, +lastField - 10, +currentPage - 1)
         }
@@ -618,11 +622,13 @@ bot.on("messageReactionAdd", (reaction, user) => {
             if(user.id !== reaction.message.guild.members.cache.find(m => m.user.tag === reaction.message.embeds[0].footer.text.split("|")[1].split(" ")[2]).id) return;
 
             let currentPage = reaction.message.embeds[0].footer.text.split("|")[2].split(" ")[2].split('/')[0];
-            let maxPage = reaction.message.embeds[0].footer.text.split("|")[2].split(" ")[2].split('/')[1]
+            // let maxPage = reaction.message.embeds[0].footer.text.split("|")[2].split(" ")[2].split('/')[1];
+
+            // console.log("+" + " " + +currentPage)
             // let firstField = reaction.message.embeds[0].fields[0].name.split(". ")[0];
             // let lastField = reaction.message.embeds[0].fields[reaction.message.embeds[0].fields.length-1].name.split(". ")[0];
 
-            if(+currentPage === +maxPage) return;
+            // if(+currentPage === +maxPage) return;
 
             generateTopList(reaction, reaction.message.guild.members.cache.find(m => m.id === reaction.message.embeds[0].footer.iconURL.split('/')[4]).user.tag, +currentPage + 1); // +firstField + 10, +lastField + 10
         }
@@ -636,8 +642,10 @@ bot.login(process.env.TOKEN);
 
 
 /* 
+
         * Сделать систему семей (_, _, _, fkick, faddzam, fdelzam, fupdate(?), fsetname(?), fmenu, finfo)
         * Сделать систему рангов и топа (rank, _, top rank, top family)
+    
 */
 
 

@@ -91,34 +91,13 @@ module.exports = {
     },
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     generateTopList: function(message, author, numPage) {
         if(message.__proto__ === Discord.Message.prototype) {
             Users.find({guildID: message.guild.id}).sort([
                 ['coins', 'descending']
             ]).exec((err, res) => {
                 if(err) console.log(err);
-                let indexLastData = res.indexOf(res[res.length - 5]);
+
                 // console.log(res)
                 let args = message.content.split(" ");
                 let num = 0;
@@ -148,7 +127,6 @@ module.exports = {
             })
 
         } else {
-            // console.log('123')
             Users.find({guildID: message.message.guild.id}).sort([
                 ['coins', 'descending']
             ]).exec((err, res) => {
@@ -159,23 +137,53 @@ module.exports = {
                 .setTitle(`DiorBot | Список топа по coins`)
                 .setColor('BLURPLE')
                 .setFooter(`© DiorBot Team | Запросил: ${author} | Страница: ${numPage}/${Math.ceil(res.length / 10)}`, message.message.guild.members.cache.find(member => member.user.tag === author).user.displayAvatarURL())
-                let lastField = message.message.embeds[0].fields[message.message.embeds[0].fields.length - 1].name.split(". ")[0];
-                let num = +lastField;
+                if(message.emoji.name === "➡️") {
+                    let maxPage = message.message.embeds[0].footer.text.split("|")[2].split(" ")[2].split('/')[1];
+                    if(numPage === +maxPage + 1) return;
 
-                if(res.slice(+lastField).length === 0) return;
-                else if(res.slice(+lastField).length < 10) {
-                    for(let i = 0; i < res.slice(+lastField).length; i++) {
-                        message.message.guild.members.cache.get(res.slice(+lastField)[i].userID) ? toplist__embed.addField(`${num+1}. ${message.message.guild.members.cache.get(res.slice(+lastField)[i].userID).displayName}`, `Кол-во коинов: ${res.slice(+lastField)[i].coins}`) : toplist__embed.addField(`${num + 1}. Пользователь вышел`, `Кол-во коинов: ${res.slice(+lastField)[i].coins}`)
-                        num++;
+                    
+                    // console.log("+" + " " + +currentPage)
+                    let lastField = message.message.embeds[0].fields[message.message.embeds[0].fields.length - 1].name.split(". ")[0];
+                    let num = +lastField;
+
+                    if(res.slice(+lastField).length === 0) return;
+                    else if(res.slice(+lastField).length < 10) {
+                        for(let i = 0; i < res.slice(+lastField).length; i++) {
+                            message.message.guild.members.cache.get(res.slice(+lastField)[i].userID) ? toplist__embed.addField(`${num+1}. ${message.message.guild.members.cache.get(res.slice(+lastField)[i].userID).displayName}`, `Кол-во коинов: ${res.slice(+lastField)[i].coins}`) : toplist__embed.addField(`${num + 1}. Пользователь вышел`, `Кол-во коинов: ${res.slice(+lastField)[i].coins}`)
+                            num++;
+                        }
+                    } else {
+                        for(let i = 0; i < 10; i++) {
+                            message.message.guild.members.cache.get(res.slice(+lastField)[i].userID) ? toplist__embed.addField(`${num+1}. ${message.message.guild.members.cache.get(res.slice(+lastField)[i].userID).displayName}`, `Кол-во коинов: ${res.slice(+lastField)[i].coins}`) : toplist__embed.addField(`${num + 1}. Пользователь вышел`, `Кол-во коинов: ${res.slice(+lastField)[i].coins}`)
+                            num++;
+                        }
                     }
-                } else {
-                    for(let i = 0; i < 10; i++) {
-                        message.message.guild.members.cache.get(res.slice(+lastField)[i].userID) ? toplist__embed.addField(`${num+1}. ${message.message.guild.members.cache.get(res.slice(+lastField)[i].userID).displayName}`, `Кол-во коинов: ${res.slice(+lastField)[i].coins}`) : toplist__embed.addField(`${num + 1}. Пользователь вышел`, `Кол-во коинов: ${res.slice(+lastField)[i].coins}`)
-                        num++;
-                    }
+    
+                    return message.message.edit(toplist__embed)
                 }
 
-                return message.message.edit(toplist__embed)
+                if(message.emoji.name === "⬅️") {
+                    let firstField = message.message.embeds[0].fields[0].name.split(". ")[0];
+                    let num = +firstField;
+                    if(numPage === 0) return;
+
+                    if(res.slice(+firstField).length === 0) return;
+                    else if(res.slice(+firstField-11).length < 10) {
+                        for(let i = 0; i < res.slice(+firstField-11).length; i++) {
+                            message.message.guild.members.cache.get(res.slice(+firstField-11)[i].userID) ? toplist__embed.addField(`${num-10}. ${message.message.guild.members.cache.get(res.slice(+firstField-11)[i].userID).displayName}`, `Кол-во коинов: ${res.slice(+firstField-11)[i].coins}`) : toplist__embed.addField(`${num - 10}. Пользователь вышел`, `Кол-во коинов: ${res.slice(+firstField-11)[i].coins}`)
+                            num++;
+                        }
+                    } else {
+                        for(let i = 0; i < 10; i++) {
+                            message.message.guild.members.cache.get(res.slice(+firstField-11)[i].userID) ? toplist__embed.addField(`${num-10}. ${message.message.guild.members.cache.get(res.slice(+firstField-11)[i].userID).displayName}`, `Кол-во коинов: ${res.slice(+firstField-11)[i].coins}`) : toplist__embed.addField(`${num - 10}. Пользователь вышел`, `Кол-во коинов: ${res.slice(+firstField-11)[i].coins}`)
+                            num++;
+                        }
+                    }
+    
+                    return message.message.edit(toplist__embed)
+                }
+
+
                 // Users.findOne({userID: member.id}, async(err, user__data) => {
                 //     if(err) console.log(err);
                 //     if(user__data) {
