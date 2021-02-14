@@ -58,6 +58,35 @@ mongoose.connection.on('connected', () => {
 
 
 bot.on("message", async message => {
+
+    Users.findOne({userID: message.author.id, guildID: message.guild.id}, async(err, data) => {
+        if(err) console.log(err);
+        if(!data) {
+            let new__data = new Users({userID: message.author.id, guildID: message.guild.id})
+            return new__data.save()
+        }
+
+        data.messages++;
+        
+        if(data.messages % 2 === 0) {
+            data.exp++;
+        }
+
+        if(data.exp === data.needleExp) {
+            data.rank++;
+            data.needleExp += 131;
+            data.exp = 0;
+
+            data.save()
+
+            return message.reply(`\`поздравляем, теперь у вас ${data.rank} уровень!\``);
+        }
+
+        data.save()
+    })
+
+
+
     //  > CMD: setprefix <  //
 
 
@@ -723,8 +752,8 @@ bot.login(process.env.TOKEN);
 /* 
 
         * Сделать систему семей (_, _, _, fkick, faddzam, fdelzam, fupdate(?), fsetname(?), fmenu, finfo)
-        * Сделать систему рангов и топа (rank, _, top rank, top family)
-    
+        * Сделать систему рангов и топа (_, _, top rank, top family)
+        * Сделать Invite, bot info
 */
 
 
