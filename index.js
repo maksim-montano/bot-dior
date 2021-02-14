@@ -126,6 +126,34 @@ bot.on("message", async message => {
             return message.channel.send(embed__invite)
         }
 
+        if(message.content.startsWith(`${data.prefix}ботинфо`)) {
+            let memberSize = 0;
+            bot.guilds.cache.forEach(item => memberSize += item.members.cache.size);
+
+            Users.find({}, async(err, data__user) => {
+                if(err) console.log(err);
+                Guilds.find({}, async(err, data__guild) => {
+                    if(err) console.log(err);
+                    if(data__guild) {
+                        let embed__botInfo = new Discord.MessageEmbed()
+                        .setTitle('DiorBot | Текущая информация об боте')
+                        .addField(`Количество серверов в БД`, `🗣️ ⇉  ** ${data__guild.length}**`)
+                        .addField(`Общее количество участников на серверах, используюших бота:`, `👥 ⇉  ** ${memberSize}**`)
+                        .addField(`Кол-во пользователей за всю историю бота:`, `👤 ⇉  ** ${data__user.length}**`)
+                        .addField(`Связь`, `[📞 Вконтакте основателя](https://vk.com/bahishev2020)\n[🌐 Связь с разработчиком](https://vk.com/shewonderful)\n[🌐 Github разработчика](https://github.com/maksim-montano)`, true)
+                        .addField('Пригласить', `[🤖 Пригласить бота на сервер](https://discord.com/api/oauth2/authorize?client_id=809036209547378728&permissions=8&scope=bot)\n`, true)
+                        .setColor('BLURPLE')
+                        .setThumbnail(bot.user.displayAvatarURL())
+                        .setFooter(`© DiorBot Team`)
+                        .setTimestamp()
+
+                        return message.channel.send(embed__botInfo)
+                    }
+                })
+            })
+
+        }
+
 
         if(message.content.startsWith(`${data.prefix}setprefix`)) {
             let args = message.content.split(" ");
