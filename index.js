@@ -88,10 +88,7 @@ bot.on("message", async message => {
 
 
     //  > CMD: setprefix <  //
-
-
-
-
+    
     Guilds.findOne({guildID: message.guild.id}, async(err, data) => {
         if(err) console.log(err);
         if(!data) {
@@ -646,6 +643,10 @@ bot.on("message", async message => {
                 if(args[1].includes('coins')) {
                     generateTopList(message, message.member.user.tag, 1)
                 }
+
+                if(args[1].includes('rank')) {
+                    generateTopList(message, message.member.user.tag, 1)
+                }
             }
 
 
@@ -750,35 +751,23 @@ bot.on("messageReactionAdd", (reaction, user) => {
         if(reaction.emoji.name === "❌") return reaction.message.delete();
     }
 
-    if(reaction.message.embeds[0].title.includes('DiorBot | Список топа по coins')) {
+
+    let topName = reaction.message.embeds[0].title.split("| ")[1].split(" ")[3];
+    if(reaction.message.embeds[0].title.includes(`DiorBot | Список топа по ${topName}`)) {
         if(user.id !== reaction.message.guild.members.cache.find(m => m.user.tag === reaction.message.embeds[0].footer.text.split("|")[1].split(" ")[2]).id) return;
         if(reaction.emoji.name === "⬅️") {
             let currentPage = reaction.message.embeds[0].footer.text.split("|")[2].split(" ")[2].split('/')[0];
-            // // let currentPage = reaction.message.embeds[0].footer.text.split("|")[1].match(/\d/)[0];
-            // // let firstField = reaction.message.embeds[0].fields[0].name.split(". ")[0]; // 10
-            // // let lastField = reaction.message.embeds[0].fields[reaction.message.embeds[0].fields.length-1].name.split(". ")[0]; 
 
-
-            // console.log("-" + " " + +currentPage)
-            
-            // if(+currentPage-1 === 1) return;
-
-            generateTopList(reaction, reaction.message.guild.members.cache.find(m => m.id === reaction.message.embeds[0].footer.iconURL.split('/')[4]).user.tag, +currentPage - 1) // generateTopList(reaction, +firstField - 10, +lastField - 10, +currentPage - 1)
+            generateTopList(reaction, reaction.message.guild.members.cache.find(m => m.id === reaction.message.embeds[0].footer.iconURL.split('/')[4]).user.tag, +currentPage - 1) 
         }
 
         if(reaction.emoji.name === "➡️") {
             if(user.id !== reaction.message.guild.members.cache.find(m => m.user.tag === reaction.message.embeds[0].footer.text.split("|")[1].split(" ")[2]).id) return;
 
             let currentPage = reaction.message.embeds[0].footer.text.split("|")[2].split(" ")[2].split('/')[0];
-            // let maxPage = reaction.message.embeds[0].footer.text.split("|")[2].split(" ")[2].split('/')[1];
 
-            // console.log("+" + " " + +currentPage)
-            // let firstField = reaction.message.embeds[0].fields[0].name.split(". ")[0];
-            // let lastField = reaction.message.embeds[0].fields[reaction.message.embeds[0].fields.length-1].name.split(". ")[0];
 
-            // if(+currentPage === +maxPage) return;
-
-            generateTopList(reaction, reaction.message.guild.members.cache.find(m => m.id === reaction.message.embeds[0].footer.iconURL.split('/')[4]).user.tag, +currentPage + 1); // +firstField + 10, +lastField + 10
+            generateTopList(reaction, reaction.message.guild.members.cache.find(m => m.id === reaction.message.embeds[0].footer.iconURL.split('/')[4]).user.tag, +currentPage + 1);
         }
 
         if(reaction.emoji.name === "❌") return reaction.message.delete();
@@ -793,9 +782,7 @@ bot.login(process.env.TOKEN);
 
         * Сделать систему семей (_, _, _, fkick, faddzam, fdelzam, fupdate(?), fsetname(?), fmenu, finfo)
         * Сделать систему рангов и топа (_, _, top rank, top family)
-        * Сделать Invite, bot info
 */
-
 
 
 
