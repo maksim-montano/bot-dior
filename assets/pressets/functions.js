@@ -4,6 +4,17 @@ const Users = require('../data/users.js');
 const {objectsEmbeds__help} = require('./objectEmbeds.js');
 
 module.exports = {
+    applyText: function(canvas, text, fontFamily, currentFontSize) {
+        const ctx = canvas.getContext('2d');
+    
+        let fontSize = currentFontSize + 10;
+    
+        do {
+            ctx.font = `${fontSize -= 10}px ${fontFamily}`;
+        } while (ctx.measureText(text).width > canvas.width - 300);
+        console.log(ctx.font)
+        return ctx.font;
+    },
     getRandomInt: function(min, max) {
         min = Math.ceil(min);
         max = Math.floor(max);

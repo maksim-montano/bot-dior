@@ -2,6 +2,7 @@
 require('dotenv').config()
 const Discord = require('discord.js'); 
 const mongoose = require('mongoose');
+const Canvas = require('canvas');
 const nekoslife = require('nekos.life');
 const neko = new nekoslife();
 
@@ -9,7 +10,7 @@ const bot = new Discord.Client();
 
 // ====== [ПОДКЛЮЧЕНИЕ PRESSETS-FILES / functions] ====== //
 
-const {sendInviteMessage, generateEmbed, generateTopList, getRandomInt} = require('./assets/pressets/functions.js');
+const {sendInviteMessage, generateEmbed, generateTopList, getRandomInt, applyText} = require('./assets/pressets/functions.js');
 const {objectsEmbeds__help} = require('./assets/pressets/objectEmbeds.js');
 
 // ====== [ПОДКЛЮЧЕНИЕ БД-схем] ====== //
@@ -576,6 +577,84 @@ bot.on("message", async message => {
                 if(args[1].includes('coins')) {
                     generateTopList(message, message.member.user.tag, 1)
                 }
+            }
+
+
+            if(message.content.startsWith(`${data.prefix}ранг`)) {
+                let args = message.content.split(" ");
+                let mention__user = message.mentions.users.first();
+                const canvas = Canvas.createCanvas(900, 200);
+                const ctx = canvas.getContext('2d');
+
+                if(!args[1]) {
+                    Users.findOne({userID: message.author.id, guildID: message.guild.id}, async(err, data) => {
+                        if(err) console.log(err);
+                        if(!data) {
+                            let new__user = new Users({userID: message.author.id, guildID: message.guild.id});
+                            new__user.save()
+                        }
+                        ctx.strokeStyle = "#74037b";
+                        const background = await Canvas.loadImage('assets/media/background__canvas.jpg');
+                        ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+                        ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+
+                        ctx.font = applyText(canvas, `${message.member.displayName}`, 'Verdana', 45);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(message.member.displayName, canvas.width / 4.4, canvas.height / 3.2);
+
+                        ctx.beginPath();
+                        ctx.globalAlpha = 0.6;
+                        ctx.rect(200, 160, 660, 3);
+                        ctx.fillStyle = 'transparent';
+                        ctx.fill();
+                        ctx.strokeStyle = '#5e5e5e';
+                        ctx.lineJoin = 'round';
+                        ctx.lineWidth = 35;
+                        ctx.stroke();
+                        ctx.globalAlpha = 1;
+                        ctx.closePath()
+
+    
+                        ctx.beginPath();
+                        ctx.globalAlpha = 0.6;
+                        ctx.rect(200, 160, ( (100 / (data.rank * data.needleExp) ) * data.exp) * 6.6, 3);
+                        ctx.fillStyle = 'transparent';
+                        ctx.fill();
+                        ctx.strokeStyle = '#b54200'; //ctx.strokeStyle = '#fa9600';
+                        ctx.lineJoin = 'round';
+                        ctx.lineWidth = 35;
+                        ctx.stroke();
+                        ctx.closePath()
+                        ctx.globalAlpha = 1;
+
+                        ctx.font = applyText(canvas, `УР`, 'sans', 23);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText('УР', canvas.width / 4.4, canvas.height / 1.44);
+
+                        ctx.font = applyText(canvas, `${data.rank}`, 'sans', 50);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(`${data.rank}`, canvas.width / 3.7, canvas.height / 1.46);
+
+                        ctx.font = applyText(canvas, `${data.exp}`, 'sans', 30);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(`${data.exp} / ${data.needleExp} EXP`, canvas.width - 240, canvas.height / 1.5);
+
+
+                        ctx.beginPath();
+                        ctx.arc(100, 100, 80, 0, Math.PI * 2, true);
+                        ctx.closePath();
+                        ctx.clip();
+
+                        const avatar = await Canvas.loadImage(message.member.user.displayAvatarURL({ format: 'jpg' }));
+                        ctx.drawImage(avatar, 10, 0, 180, 180);
+
+
+                        const attachment = new Discord.MessageAttachment(canvas.toBuffer(), 'rank-card.jpg');
+
+                        message.channel.send(attachment);
+                    })
+                } else if(args[1] && mention__user) {}
             }
         }
     })
